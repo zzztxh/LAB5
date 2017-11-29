@@ -2,12 +2,13 @@ package pkgCore;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 
 import pkgException.DeckException;
 import pkgException.HandException;
-
+import pkgEnum.eBlackJackResult;
 import pkgEnum.eGameType;
 
 public class GamePlayBlackJack extends GamePlay {
@@ -46,6 +47,21 @@ public class GamePlayBlackJack extends GamePlay {
 		}
 		return c;
 	}
+	
+	public void Draw(GamePlayerHand GPH, Card c) throws DeckException, HandException {
+
+		if (bCanPlayerDraw(GPH)) {
+			Hand h = this.gethmGameHand(GPH);
+			h.AddCard(c);
+			this.putHandToGame(GPH, h);
+		}
+	}
+	public void setDealerHand(Card c) throws DeckException, HandException {
+
+		Hand h = hDealer;
+		h.AddCard(c);
+
+}
 
 	private boolean bCanPlayerDraw(GamePlayerHand GPH) throws HandException {
 		boolean bCanPlayerDraw = false;
@@ -54,7 +70,12 @@ public class GamePlayBlackJack extends GamePlay {
 
 		HandScoreBlackJack HSB = (HandScoreBlackJack)h.ScoreHand();
 		
-		// TODO: Determine if the player can draw another card (are they busted?)
+		for (Integer i : HSB.getNumericScores()) {
+			if (i <= 21) {
+				bCanPlayerDraw = true;
+				break;
+			}
+		}
 
 		return bCanPlayerDraw;
 	}
@@ -68,12 +89,12 @@ public class GamePlayBlackJack extends GamePlay {
 		
 		HandScoreBlackJack HSB = (HandScoreBlackJack)hDealer.ScoreHand();
 		
-		//TODO: Determine if the dealer MUST draw.
-		//		Dealer must draw unless they are bust and they don't have a 
-		//		numeric score between 17-21.  
-		//		5-5 = 10, they must draw
-		//		A-6 = 7 or 17, they must stay (because they have 17)
-		//		J-J-J = 30, they are busted, they can't draw
+		for (Integer i : HSB.getNumericScores()) {
+			if ((i >= 17)) {
+				bDoesDealerHaveToDraw = false;
+				break;
+			}
+		}
 		
 		
 		return bDoesDealerHaveToDraw;
@@ -85,23 +106,78 @@ public class GamePlayBlackJack extends GamePlay {
 	
 	
 	
-	public void ScoreGame(GamePlayerHand GPH)
+	public void ScoreGame(GamePlayerHand GPH) throws HandException
 	{
-		boolean bIsHandWinner = false;
-		//	TODO: Determine if player is a winner
-		
-		//	TODO: Find the Dealer's hand
-		//	TODO: Score Dealer's hand
-		
-		//	TODO: Find Player's hand
-		//	TODO: Score Player's hand
-		
-		//	TODO: If Player's hand > Dealer's hand and <= 21, then eBlackJackResult = WIN
-		//			If Player's hand < Dealer's hand and Dealer didn't bust = LOSE
-		//			If Player's hand == Dealer's hand and both didn't bust = TIE
-		
-		
+		HandScoreBlackJack dScore = (HandScoreBlackJack) hDealer.ScoreHand();
+
+		Iterator it = this.getHmGameHands().entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry pair = (Map.Entry) it.next();
+			GamePlayerHand kGPH = (GamePlayerHand) pair.getKey();
+
+			if (kGPH.getGameID() == GPH.getGameID()) {
+				HandBlackJack hPlayer = (HandBlackJack) pair.getValue();
+				HandScoreBlackJack pHSP = (HandScoreBlackJack) hPlayer.ScoreHand();
+				hPlayer.seteBJR(CheckScore(dScore, pHSP));
+				this.putHandToGame(kGPH, hPlayer);
+
+			}
+		}
+
 	}
+
+	private eBlackJackResult CheckScore(HandScoreBlackJack dHSB, HandScoreBlackJack pHSB) {
+
+
+		if (isBusted(pHSB)) {
+			return eBlackJackResult.LOSE;
+		}
+
+		if (isBusted(dHSB)) {
+			return eBlackJackResult.WIN;
+		}
+		
+		
+		Integer iHiDealerScore = GamePlayBlackJack.ValidScores(dHSB.getNumericScores()).getLast().intValue();
+		Integer iHiPlayerScore = GamePlayBlackJack.ValidScores(dHSB.getNumericScores()).getLast().intValue();
+		
+		
+		if (iHiDealerScore < iHiPlayerScore)
+		{
+			return eBlackJackResult.WIN;
+		}
+		else if (iHiDealerScore > iHiPlayerScore)
+		{
+			return eBlackJackResult.LOSE;
+		}
+		else
+		{
+			return eBlackJackResult.TIE;
+		}
+
+	}
+
+	private boolean isBusted(HandScoreBlackJack HSB) {
+		boolean isBusted = true;
+
+		for (Integer i : HSB.getNumericScores()) {
+
+			if (i <= 21) {
+				isBusted = false;
+				break;
+			}
+		}
+
+		return isBusted;
+
+	}
+
+	public static LinkedList<Integer> ValidScores(LinkedList<Integer> scores) {
+		LinkedList<Integer> tempScores = (LinkedList<Integer>) scores.clone();
+		tempScores.removeIf(p -> p.intValue() > 21);
+		return tempScores;
+
+}
 
 	public Player getpDealer() {
 		return pDealer;

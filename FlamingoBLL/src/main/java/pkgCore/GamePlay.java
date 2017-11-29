@@ -19,27 +19,27 @@ public abstract class GamePlay {
 	private Deck dGameDeck;
 	public GamePlay(eGameType eGameType, HashMap<UUID, Player> hmTablePlayers, Deck dGameDeck) {
 
-		// Set the GameID
+		
 		this.GameID = UUID.randomUUID();
 
-		// Set the eGametype
+		
 		this.eGameType = eGameType;
 		
-		// Add a player to the game based on players at the table.
+		
 		Iterator it = hmTablePlayers.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry pair = (Map.Entry) it.next();
 			Player p = (Player) pair.getValue();
 
-			//TODO: Add the player to the game
+			
 		}
 
 		switch (eGameType) {
 		case BLACKJACK:
-			//TODO: Set the game deck to the existing passed-in deck
+			
 			break;
 		case POKER:
-			//TODO: Set the game deck to a brand new deck
+			
 			break;
 		}
 	}
@@ -56,7 +56,7 @@ public abstract class GamePlay {
 		return hmGamePlayers;
 	}
 
-	private HashMap<GamePlayerHand, Hand> getHmGameHands() {
+	protected HashMap<GamePlayerHand, Hand> getHmGameHands() {
 		return hmGameHands;
 	}
 
@@ -92,5 +92,4 @@ public abstract class GamePlay {
 		return (Player)hmGamePlayers.get(p.getPlayerID());
 
 	}
-
 }
